@@ -1,1 +1,38 @@
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
+# Sample movie dataset
+data = {
+    'title': ['Inception', 'The Matrix', 'Titanic', 'Interstellar', 'The Notebook'],
+    'genres': ['Action Sci-Fi', 'Action Sci-Fi', 'Romance Drama', 'Sci-Fi Drama', 'Romance Drama'],
+    'actors': ['Leonardo DiCaprio', 'Keanu Reeves', 'Leonardo DiCaprio', 'Matthew McConaughey', 'Ryan Gosling'],
+    'description': [
+        'A thief who steals corporate secrets through use of dream-sharing technology.',
+        'A computer hacker learns about the true nature of his reality.',
+        'A love story that unfolds on the ill-fated Titanic ship.',
+        'A team travels through a wormhole in space in an attempt to ensure humanity\'s survival.',
+        'A poor man and a rich woman fall in love in the 1940s.'
+    ]
+}
+
+df = pd.DataFrame(data)
+
+# Combine features to build profile
+df['profile'] = df['genres'] + ' ' + df['actors'] + ' ' + df['description']
+
+# Vectorize profiles using TF-IDF
+vectorizer = TfidfVectorizer(stop_words='english')
+tfidf_matrix = vectorizer.fit_transform(df['profile'])
+
+# Function to get recommendations
+def recommend_movies(user_input, top_n=3):
+    user_vector = vectorizer.transform([user_input])
+    similarity = cosine_similarity(user_vector, tfidf_matrix)
+    scores = list(enumerate(similarity[0]))
+    ranked_scores = sorted(scores, key=lambda x: x[1], reverse=True)
+    
+    print("\nTop Recommendations:")
+    for i in range(top_n):
+        idx = ranked_scores[i][0]
+        print(f"{i+1}. {df.iloc[idx]['title']}")
